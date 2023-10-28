@@ -1,8 +1,24 @@
-# MinHashSharp - A simple lightweight library for similarity estimation
+# MinHashSharp - A Robust Library for Similarity Estimation
 
-`MinHashSharp` offers a simple lightweight data structure for indexing and estimating Jaccard similarity between sets. 
+`MinHashSharp` offers a simple lightweight data structure designed to index and estimate Jaccard similarity between sets. Leveraging its robust structure, it has been successfully tested on datasets as large as 60GB, encompassing tens of millions of documents, while ensuring smooth and efficient operations.
 
-Was tested with 60GB of data and tens of millions of documents, and ran smoothly and efficiently. 
+## Installation
+
+To incorporate MinHashSharp into your project, choose one of the following methods:
+
+### .NET CLI
+```bash
+dotnet add package MinHashSharp
+```
+
+### NuGet Package Manager
+```powershell
+Install-Package MinHashSharp
+```
+
+For detailed package information, visit [MinHashSharp on NuGet](https://www.nuget.org/packages/MinHashSharp/).
+
+## Key Features
 
 The library currently offers two classes:
 
