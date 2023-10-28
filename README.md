@@ -8,7 +8,7 @@ The library currently offers two classes:
 
 `MinHash`: A probabilistic data structure for computing Jaccard similarity between sets. 
 
-`MinHashLSH` A class for supporting big-data fast querying using an approximate `Jaccard similarity` threshold.
+`MinHashLSH`: A class for supporting big-data fast querying using an approximate `Jaccard similarity` threshold.
 
 ## Sample usage
 
@@ -43,7 +43,7 @@ lock (lsh) {
 
 ## Custom hash function
 
-By default, the library uses the [Farmhash function](https://opensource.googleblog.com/2014/03/introducing-farmhash.html) introduced by Google for effeciency. For more accurate hashes, one can inject a custom hash function into the `MinHash` object.
+By default, the library uses the [Farmhash function](https://opensource.googleblog.com/2014/03/introducing-farmhash.html) introduced by Google for efficiency. For more accurate hashes, one can inject a custom hash function into the `MinHash` object.
 
 For example, if you want to use the C# default string hash function:
 
