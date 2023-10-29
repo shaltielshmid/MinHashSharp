@@ -29,14 +29,14 @@
         /// <returns></returns>
         public MinHash Update(params string[] values) {
             // For each value, we calculate N hashes like this:
-            // ((hash(val) * ai + bi) % MersennePrime) & uint.MaxValue
+            // ((hash(val) * ai + bi) % MersennePrime)
             // Take the minimum for each one
             for (int i = 0; i < _numPerm; i++) {
                 ulong a = _perms.a[i];
                 ulong b = _perms.b[i];
 
                 for (int iVal = 0; iVal < values.Length; iVal++) {
-                    uint hash = (uint)((_hashFunc(values[iVal]) * a + b) % MersennePrime) & uint.MaxValue;
+                    uint hash = (uint)((_hashFunc(values[iVal]) * a + b) % MersennePrime);
                     if (hash < _hashValues[i])
                         _hashValues[i] = hash;
                 }// next value
