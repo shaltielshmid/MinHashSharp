@@ -35,10 +35,10 @@
                 ulong a = _perms.a[i];
                 ulong b = _perms.b[i];
 
-                for (int iVal = 0; iVal < values.Length; iVal++) {
-                    uint hash = (uint)((_hashFunc(values[iVal]) * a + b) % MersennePrime);
-                    if (hash < _hashValues[i])
-                        _hashValues[i] = hash;
+                for (int iValue = 0; iValue < values.Length; iValue++) {
+                    uint hash = (uint)((_hashFunc(values[iValue]) * a + b) % MersennePrime);
+                    if (hash < _hashValues[iValue])
+                        _hashValues[iValue] = hash;
                 }// next value
             }
 
@@ -90,6 +90,7 @@
         // For the future, may be worth using a LRU dictionary or perhaps storing the cache in another 
         // structure which will manage the cache.
         private static (int perm, int seed, ulong[] a, ulong[] b) _cachedPermutation = (0, 0, Array.Empty<ulong>(), Array.Empty<ulong>());
+        
         private static (ulong[] a, ulong[] b) InitPermutations(int numPerm, int seed) {
             // In case there's an update to the cache object from a different thread, just store the instance
             // locally, so the check will be safe. 

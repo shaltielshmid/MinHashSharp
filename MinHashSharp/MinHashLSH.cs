@@ -6,8 +6,8 @@ namespace MinHashSharp {
         private readonly int _numPerm;
         private readonly int _numBuckets;
         private readonly int _bucketRange;
-        private readonly List<Dictionary<string, HashSet<string>>> _hashTables;
-        private readonly List<(int start, int end)> _hashRanges;
+        private readonly Dictionary<string, HashSet<string>>[] _hashTables;
+        private readonly (int start, int end)[] _hashRanges;
         private readonly HashSet<string> _keys;
 
         /// <summary>
@@ -40,9 +40,13 @@ namespace MinHashSharp {
             _numPerm = numPerm;
             _numBuckets = param.numBuckets;
             _bucketRange = param.bucketRange;
-            _keys = new();
-            _hashTables = Enumerable.Range(0, _numBuckets).Select(_ => new Dictionary<string, HashSet<string>>()).ToList();
-            _hashRanges = Enumerable.Range(0, _numBuckets).Select(i => (i * _bucketRange, (i + 1) * _bucketRange)).ToList();
+            _keys = new HashSet<string>();
+            _hashTables = new Dictionary<string, HashSet<string>>[_numBuckets];
+            _hashRanges = new (int start, int end)[_numBuckets];
+            for (int i = 0; i < _numBuckets; i++) {
+                _hashTables[i] = new();
+                _hashRanges[i] = (i * _bucketRange, (i + 1) * _bucketRange);
+            }
         }
         /// <summary>
         /// Insert a key to the index, together with a MinHash of the set referenced by a unique key.
