@@ -37,8 +37,8 @@
 
                 for (int iValue = 0; iValue < values.Length; iValue++) {
                     uint hash = (uint)((_hashFunc(values[iValue]) * a + b) % MersennePrime);
-                    if (hash < _hashValues[iValue])
-                        _hashValues[iValue] = hash;
+                    if (hash < _hashValues[i])
+                        _hashValues[i] = hash;
                 }// next value
             }
 
