@@ -125,9 +125,9 @@ namespace MinHashSharp {
                     // Calculate the false positive and negative probabilities by integrating over the
                     // error function for each, and choose the set that produces the smallest error.
                     // fp = f(x) = 1 - ((1 - x^r)^b), integrated from 0 to thresh
-                    var fpProb = GaussLegendreRule.Integrate(x => 1 - Math.Pow(1 - Math.Pow(x, r), b), 0, threshold, 5);
+                    var fpProb = GaussLegendreRule.Integrate(x => 1 - Math.Pow(1 - Math.Pow(x, r), b), invervalBegin: 0, invervalEnd: threshold, order: 5);
                     // fn = f(x) = 1 - fp(x), integrated from thresh to 1
-                    var fnProb = GaussLegendreRule.Integrate(x => Math.Pow(1 - Math.Pow(x, r), b), threshold, 1, 5);
+                    var fnProb = GaussLegendreRule.Integrate(x => Math.Pow(1 - Math.Pow(x, r), b), invervalBegin: threshold, invervalEnd: 1, order: 5);
 
                     // Combine the probabilities using the weights that were given (e.g., one can prioritize
                     // having fewer false positives at the cost of false negatives)
