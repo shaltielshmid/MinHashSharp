@@ -1,5 +1,7 @@
 # MinHashSharp - A Robust Library for Similarity Estimation
 
+[![NuGet](https://img.shields.io/nuget/v/MinHashSharp.svg)](https://www.nuget.org/packages/MinHashSharp/)
+
 `MinHashSharp` offers a simple lightweight data structure designed to index and estimate Jaccard similarity between sets. Leveraging its robust structure, it has been successfully tested on datasets as large as 60GB, encompassing tens of millions of documents, while ensuring smooth and efficient operations.
 
 ## Installation
