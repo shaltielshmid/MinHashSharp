@@ -174,7 +174,8 @@ namespace MinHashSharp {
                     lsh._keys.Add(key);
                 tqdm?.Step();
             }
-            tqdm?.Finish();
+            if (count > 0)
+                tqdm?.Finish();
             tqdm?.Reset();
 
             // Read in the _hashTables
@@ -184,7 +185,8 @@ namespace MinHashSharp {
             for (int i = 0; i < numBuckets; i++) {
                 count = br.ReadInt32();
                 tqdm?.SetLabel($"Bucket #{i + 1}");
-                tqdm?.Progress(0, count); // reset our tqdm progress bar
+                tqdm?.Reset();
+                tqdm?.Progress(0, count); // reset our total for the tqdm progress bar
 
                 while (count-- > 0) {
                     // Key: string, value: HashSet<string>
