@@ -1,6 +1,5 @@
 ﻿using MathNet.Numerics.Integration;
 using System.Runtime.InteropServices;
-using System.Xml.Schema;
 using TqdmSharp;
 
 namespace MinHashSharp {
