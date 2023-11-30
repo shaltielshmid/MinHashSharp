@@ -185,8 +185,8 @@ namespace MinHashSharp {
             // Save the _hashTables - count is _numBuckets
             for (int i = 0; i < numBuckets; i++) {
                 count = br.ReadInt32();
-                tqdm?.SetLabel($"Bucket #{i + 1}");
                 tqdm?.Reset();
+                tqdm?.SetLabel($"Bucket #{i + 1}");
                 tqdm?.Progress(0, count); // reset our total for the tqdm progress bar
 
                 while (count-- > 0) {
