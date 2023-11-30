@@ -1,5 +1,7 @@
 ﻿using MathNet.Numerics.Integration;
 using System.Runtime.InteropServices;
+using System.Xml.Schema;
+using TqdmSharp;
 
 namespace MinHashSharp {
     public class MinHashLSH {
@@ -48,6 +50,7 @@ namespace MinHashSharp {
                 _hashRanges[i] = (i * _bucketRange, (i + 1) * _bucketRange);
             }
         }
+
         /// <summary>
         /// Insert a key to the index, together with a MinHash of the set referenced by a unique key.
         /// A list of keys will be the return value when querying for matches. 
@@ -97,6 +100,84 @@ namespace MinHashSharp {
         }
 
         public int Count => _keys.Count;
+
+        public void Serialize(string path) {
+            using var stream = File.OpenWrite(path);
+            using var bw = new BinaryWriter(stream);
+            
+            // Write out the 3 parameters
+            bw.Write(_numPerm);
+            bw.Write(_numBuckets);
+            bw.Write(_bucketRange);
+            // The _hashRanges is generated automatically from these parameters, so no need to serialize it
+            // Save all the keys 
+            bw.Write(_keys.Count);
+            foreach (string key in _keys)
+                bw.Write(key);
+            // Save the _hashTables - count is _numBuckets
+            for (int i = 0; i < _numBuckets; i++) {
+                bw.Write(_hashTables[i].Count);
+                foreach (var kvp in _hashTables[i]) {
+                    bw.Write(kvp.Key);
+                    bw.Write(kvp.Value.Count);
+                    foreach (var v in kvp.Value)
+                        bw.Write(v);
+                }
+            }
+        }
+
+        public static MinHashLSH Deserialize(string path, bool verbose = false) {
+            if (verbose)
+                Console.WriteLine($"Deserializing LSH from {path}...");
+            using var stream = File.OpenRead(path);
+            using var br = new BinaryReader(stream);
+
+            // Read the first 3 parameters
+            int numPerm = br.ReadInt32();
+            int numBuckets = br.ReadInt32();
+            int bucketRange = br.ReadInt32();
+            // Create our LSH object
+            var lsh = new MinHashLSH(numPerm, (numBuckets, bucketRange));
+
+            if (verbose)
+                Console.WriteLine("Loading in keys set:");
+            // Read in the keys
+            int count = br.ReadInt32();
+            var tqdm = verbose ? new Tqdm.ProgressBar(total: count) : null;
+            while (count-- > 0) {
+                lsh._keys.Add(br.ReadString());
+                tqdm?.Step();
+            }
+            tqdm?.Finish();
+            tqdm?.Reset();
+
+            // Read in the _hashTables
+            if (verbose)
+                Console.WriteLine($"Reading in {numBuckets} buckets:");
+            // Save the _hashTables - count is _numBuckets
+            for (int i = 0; i < numBuckets; i++) {
+                count = br.ReadInt32();
+                tqdm?.SetLabel($"Bucket #{i + 1}");
+                tqdm?.Progress(0, count); // reset our tqdm progress bar
+
+                while (count-- > 0) {
+                    // Key: string, value: HashSet<string>
+                    string key = br.ReadString();
+                    var value = new HashSet<string>();
+                    int valueCount = br.ReadInt32();
+                    while (valueCount-- > 0)
+                        value.Add(br.ReadString());
+                    // Add it in to our hashTables object
+                    lsh._hashTables[i].Add(key, value);
+
+                    tqdm?.Step();
+                }
+            }
+            tqdm?.Finish();
+
+            return lsh;
+        }
+
 
         private static string CreateRepresentationOfHashValues(uint[] vals) {
             // Convert the uints to chars, and then convert to string
