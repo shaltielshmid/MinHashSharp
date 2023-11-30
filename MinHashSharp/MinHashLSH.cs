@@ -197,7 +197,7 @@ namespace MinHashSharp {
                     while (valueCount-- > 0)
                         value.Add(br.ReadString());
                     // Add it in to our hashTables object
-                    lsh._hashTables[i].Add(key, value);
+                    lsh._hashTables[i][key] = value;
 
                     tqdm?.Step();
                 }
