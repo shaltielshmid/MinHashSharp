@@ -1,5 +1,6 @@
 ﻿using MathNet.Numerics.Integration;
 using System.Runtime.InteropServices;
+using TqdmSharp;
 
 namespace MinHashSharp {
     public class MinHashLSH {
@@ -9,6 +10,7 @@ namespace MinHashSharp {
         private readonly Dictionary<string, HashSet<string>>[] _hashTables;
         private readonly (int start, int end)[] _hashRanges;
         private readonly HashSet<string> _keys;
+        private bool _frozen;
 
         /// <summary>
         /// The `MinHash_LSH` index. 
@@ -48,6 +50,7 @@ namespace MinHashSharp {
                 _hashRanges[i] = (i * _bucketRange, (i + 1) * _bucketRange);
             }
         }
+
         /// <summary>
         /// Insert a key to the index, together with a MinHash of the set referenced by a unique key.
         /// A list of keys will be the return value when querying for matches. 
@@ -56,6 +59,8 @@ namespace MinHashSharp {
         /// <param name="mh">The MinHash object</param>
         /// <exception cref="ArgumentException"></exception>
         public void Insert(string key, MinHash mh) {
+            if (_frozen)
+                throw new MethodAccessException("Cannot insert new hashes into a frozen index.");
             if (mh.Length != _numPerm)
                 throw new ArgumentException("Permutation length of minhash doesn't match expected.", nameof(mh));
             if (_keys.Contains(key))
@@ -96,7 +101,115 @@ namespace MinHashSharp {
             }// next bucket
         }
 
+        /// <summary>
+        /// Freeze the LSH so that no more keys can be added, and by doing so we can clear out the keys array and save memory.
+        /// </summary>
+        public void Freeze() {
+            _frozen = true;
+            // Clear out the keys set, no need to store them anymore
+            _keys.Clear();
+        }
+
         public int Count => _keys.Count;
+
+        public bool IsFrozen => _frozen;
+
+        /// <summary>
+        /// Serialize the LSH index to a binary file.
+        /// </summary>
+        /// <param name="path">Path to save the index</param>
+        public void Serialize(string path) {
+            using var stream = File.OpenWrite(path);
+            using var bw = new BinaryWriter(stream);
+
+            // Write out the 3 parameters
+            bw.Write(_frozen);
+            bw.Write(_numPerm);
+            bw.Write(_numBuckets);
+            bw.Write(_bucketRange);
+            // The _hashRanges is generated automatically from these parameters, so no need to serialize it
+            // Save all the keys 
+            bw.Write(_keys.Count);
+            foreach (string key in _keys)
+                bw.Write(key);
+            // Save the _hashTables - count is _numBuckets
+            for (int i = 0; i < _numBuckets; i++) {
+                bw.Write(_hashTables[i].Count);
+                foreach (var kvp in _hashTables[i]) {
+                    bw.Write(kvp.Key);
+                    bw.Write(kvp.Value.Count);
+                    foreach (var v in kvp.Value)
+                        bw.Write(v);
+                }
+            }
+        }
+        /// <summary>
+        /// Deserialize an LSH index from a binary file saved using <see cref="MinHashLSH.Serialize(string)"/>.
+        /// </summary>
+        /// <param name="path">Path to the saved LSH index</param>
+        /// <param name="asFrozen">Whether to treat the index as frozen, and not load in the key array</param>
+        /// <param name="verbose">Print out progress updates to the console.</param>
+        /// <returns>The loaded LSH index</returns>
+        public static MinHashLSH Deserialize(string path, bool asFrozen = false, bool verbose = false) {
+            if (verbose)
+                Console.WriteLine($"Deserializing LSH from {path}...");
+            using var stream = File.OpenRead(path);
+            using var br = new BinaryReader(stream);
+
+            // Read the first 3 parameters
+            bool frozen = br.ReadBoolean() || asFrozen;
+            int numPerm = br.ReadInt32();
+            int numBuckets = br.ReadInt32();
+            int bucketRange = br.ReadInt32();
+            // Create our LSH object
+            var lsh = new MinHashLSH(numPerm, (numBuckets, bucketRange));
+
+            if (verbose)
+                Console.WriteLine("Loading in keys set:");
+            // Read in the keys
+            int count = br.ReadInt32();
+            var tqdm = verbose ? new Tqdm.ProgressBar(total: count) : null;
+            while (count-- > 0) {
+                string key = br.ReadString();
+                if (!asFrozen)
+                    lsh._keys.Add(key);
+                tqdm?.Step();
+            }
+            if (count > 0)
+                tqdm?.Finish();
+            tqdm?.Reset();
+
+            // Read in the _hashTables
+            if (verbose)
+                Console.WriteLine($"Reading in {numBuckets} buckets:");
+            // Save the _hashTables - count is _numBuckets
+            for (int i = 0; i < numBuckets; i++) {
+                count = br.ReadInt32();
+                tqdm?.SetLabel($"Bucket #{i + 1}");
+                tqdm?.Reset();
+                tqdm?.Progress(0, count); // reset our total for the tqdm progress bar
+
+                while (count-- > 0) {
+                    // Key: string, value: HashSet<string>
+                    string key = br.ReadString();
+                    var value = new HashSet<string>();
+                    int valueCount = br.ReadInt32();
+                    while (valueCount-- > 0)
+                        value.Add(br.ReadString());
+                    // Add it in to our hashTables object
+                    lsh._hashTables[i].Add(key, value);
+
+                    tqdm?.Step();
+                }
+            }
+            tqdm?.Finish();
+
+            if (asFrozen)
+                lsh.Freeze();
+
+            return lsh;
+        }
+
 
         private static string CreateRepresentationOfHashValues(uint[] vals) {
             // Convert the uints to chars, and then convert to string
