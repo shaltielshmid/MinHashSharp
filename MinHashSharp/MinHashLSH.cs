@@ -11,6 +11,7 @@ namespace MinHashSharp {
         private readonly Dictionary<string, HashSet<string>>[] _hashTables;
         private readonly (int start, int end)[] _hashRanges;
         private readonly HashSet<string> _keys;
+        private bool _frozen;
 
         /// <summary>
         /// The `MinHash_LSH` index. 
@@ -59,6 +60,8 @@ namespace MinHashSharp {
         /// <param name="mh">The MinHash object</param>
         /// <exception cref="ArgumentException"></exception>
         public void Insert(string key, MinHash mh) {
+            if (_frozen)
+                throw new MethodAccessException("Cannot insert new hashes into a frozen index.");
             if (mh.Length != _numPerm)
                 throw new ArgumentException("Permutation length of minhash doesn't match expected.", nameof(mh));
             if (_keys.Contains(key))
@@ -99,13 +102,20 @@ namespace MinHashSharp {
             }// next bucket
         }
 
+        public void Freeze() {
+            _frozen = true;
+            // Clear out the keys set, no need to store them anymore
+            _keys.Clear();
+        }
+
         public int Count => _keys.Count;
 
         public void Serialize(string path) {
             using var stream = File.OpenWrite(path);
             using var bw = new BinaryWriter(stream);
-            
+
             // Write out the 3 parameters
+            bw.Write(_frozen);
             bw.Write(_numPerm);
             bw.Write(_numBuckets);
             bw.Write(_bucketRange);
@@ -126,13 +136,14 @@ namespace MinHashSharp {
             }
         }
 
-        public static MinHashLSH Deserialize(string path, bool verbose = false) {
+        public static MinHashLSH Deserialize(string path, bool asFrozen = false, bool verbose = false) {
             if (verbose)
                 Console.WriteLine($"Deserializing LSH from {path}...");
             using var stream = File.OpenRead(path);
             using var br = new BinaryReader(stream);
 
             // Read the first 3 parameters
+            bool frozen = br.ReadBoolean() || asFrozen;
             int numPerm = br.ReadInt32();
             int numBuckets = br.ReadInt32();
             int bucketRange = br.ReadInt32();
@@ -145,7 +156,9 @@ namespace MinHashSharp {
             int count = br.ReadInt32();
             var tqdm = verbose ? new Tqdm.ProgressBar(total: count) : null;
             while (count-- > 0) {
-                lsh._keys.Add(br.ReadString());
+                string key = br.ReadString();
+                if (!asFrozen)
+                    lsh._keys.Add(key);
                 tqdm?.Step();
             }
             tqdm?.Finish();
@@ -174,6 +187,9 @@ namespace MinHashSharp {
                 }
             }
             tqdm?.Finish();
+
+            if (asFrozen)
+                lsh.Freeze();
 
             return lsh;
         }
