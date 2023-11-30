@@ -102,6 +102,9 @@ namespace MinHashSharp {
             }// next bucket
         }
 
+        /// <summary>
+        /// Freeze the LSH so that no more keys can be added, and by doing so we can clear out the keys array and save memory.
+        /// </summary>
         public void Freeze() {
             _frozen = true;
             // Clear out the keys set, no need to store them anymore
@@ -110,6 +113,10 @@ namespace MinHashSharp {
 
         public int Count => _keys.Count;
 
+        /// <summary>
+        /// Serialize the LSH index to a binary file.
+        /// </summary>
+        /// <param name="path">Path to save the index</param>
         public void Serialize(string path) {
             using var stream = File.OpenWrite(path);
             using var bw = new BinaryWriter(stream);
@@ -135,7 +142,13 @@ namespace MinHashSharp {
                 }
             }
         }
-
+        /// <summary>
+        /// Deserialize an LSH index from a binary file saved using <see cref="MinHashLSH.Serialize(string)"/>.
+        /// </summary>
+        /// <param name="path">Path to the saved LSH index</param>
+        /// <param name="asFrozen">Whether to treat the index as frozen, and not load in the key array</param>
+        /// <param name="verbose">Print out progress updates to the console.</param>
+        /// <returns>The loaded LSH index</returns>
         public static MinHashLSH Deserialize(string path, bool asFrozen = false, bool verbose = false) {
             if (verbose)
                 Console.WriteLine($"Deserializing LSH from {path}...");
