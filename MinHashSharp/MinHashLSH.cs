@@ -112,6 +112,8 @@ namespace MinHashSharp {
 
         public int Count => _keys.Count;
 
+        public bool IsFrozen => _frozen;
+
         /// <summary>
         /// Serialize the LSH index to a binary file.
         /// </summary>
