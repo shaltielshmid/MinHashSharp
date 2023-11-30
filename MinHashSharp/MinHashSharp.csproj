@@ -24,6 +24,7 @@
     <PackageProjectUrl>https://github.com/shaltielshmid/MinHashSharp</PackageProjectUrl>
     <RepositoryUrl>https://github.com/shaltielshmid/MinHashSharp.git</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
+    <PackageReleaseNotes>1.1.0: Added serialize/deserialize option for an LSH index; Added option to "freeze" index.</PackageReleaseNotes>
     <Version>1.1.0</Version>
     <AssemblyVersion>1.1.0.0</AssemblyVersion>
     <FileVersion>1.1.0.0</FileVersion>
